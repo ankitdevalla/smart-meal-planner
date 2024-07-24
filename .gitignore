@@ -3,6 +3,7 @@ venv/
 
 # Ignore environment variables file
 .env
+/frontend/.env
 
 # Ignore node_modules directory in frontend
 frontend/node_modules/

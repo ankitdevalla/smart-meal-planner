@@ -1,22 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 // Profile component for managing user profile
 const Profile = () => {
-  const [profile, setProfile] = useState({});
+  const { user, logout } = useContext(AuthContext);
 
-  useEffect(() => {
-    // Fetch user profile from API
-    axios.get('/api/profile').then((response) => {
-      setProfile(response.data);
-    });
-  }, []);
+  if (!user) {
+    return <div>Please log in.</div>;
+  }
 
   return (
     <div>
       <h2>Profile</h2>
-      <p>Username: {profile.username}</p>
-      <p>Email: {profile.email}</p>
+      <img src={user.picture} alt={user.name} />
+      <p>Name: {user.name}</p>
+      <p>Email: {user.email}</p>
+      <button onClick={logout}>Logout</button>
     </div>
   );
 };

@@ -1,65 +1,84 @@
-import React from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
-// Registration component for user registration
 const Register = () => {
-  // Initial values for the form fields
-  const initialValues = {
+  const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
+  });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Validation schema for the form fields
-  const validationSchema = Yup.object({
-    username: Yup.string().required('Username is required'),
-    email: Yup.string().email('Invalid email format').required('Email is required'),
-    password: Yup.string().required('Password is required'),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password'), null], 'Passwords must match')
-      .required('Confirm Password is required'),
-  });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:8000/api/register/', formData);
+      if (response.status === 201) {
+        navigate('/login');
+      }
+    } catch (error) {
+      setError(error.response.data.error);
+    }
+  };
 
-  // Function to handle form submission
-  const onSubmit = (values) => {
-    console.log('Form data', values);
+  const handleGoogleRegisterSuccess = async (credentialResponse) => {
+    const decodedToken = jwtDecode(credentialResponse.credential);
+    const user = {
+      name: decodedToken.name,
+      email: decodedToken.email,
+      picture: decodedToken.picture,
+    };
+
+    try {
+      // Send a request to the backend to register/login the user
+      const response = await axios.post('http://localhost:8000/api/google-login/', user);
+      if (response.status === 200) {
+        navigate('/login');
+      }
+    } catch (error) {
+      console.log('Google register failed:', error);
+      setError('Google register failed');
+    }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
-        <Form>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+      <div>
+        <h2>Register</h2>
+        <form onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="username">Username</label>
-            <Field type="text" id="username" name="username" />
-            <ErrorMessage name="username" component="div" />
+            <label>Username:</label>
+            <input type="text" name="username" value={formData.username} onChange={handleChange} required />
           </div>
-
           <div>
-            <label htmlFor="email">Email</label>
-            <Field type="email" id="email" name="email" />
-            <ErrorMessage name="email" component="div" />
+            <label>Email:</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
           </div>
-
           <div>
-            <label htmlFor="password">Password</label>
-            <Field type="password" id="password" name="password" />
-            <ErrorMessage name="password" component="div" />
+            <label>Password:</label>
+            <input type="password" name="password" value={formData.password} onChange={handleChange} required />
           </div>
-
-          <div>
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <Field type="password" id="confirmPassword" name="confirmPassword" />
-            <ErrorMessage name="confirmPassword" component="div" />
-          </div>
-
+          {error && <div style={{ color: 'red' }}>{error}</div>}
           <button type="submit">Register</button>
-        </Form>
-      </Formik>
-    </div>
+        </form>
+        <h2>Or</h2>
+        <GoogleLogin
+          onSuccess={handleGoogleRegisterSuccess}
+          onError={() => {
+            console.log('Google register failed');
+            setError('Google register failed');
+          }}
+        />
+      </div>
+    </GoogleOAuthProvider>
   );
 };
 

@@ -7,6 +7,11 @@ from rest_framework import status
 from .models import TestUpload
 from .serializers import TestUploadSerializer
 from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 @api_view(['GET'])
 def hello_world(request):
@@ -29,3 +34,54 @@ class TestUploadView(APIView):
 # View to render the upload form
 def upload_form(request):
     return render(request, 'test_upload.html')
+
+@csrf_exempt
+def register(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        if not username or not email or not password:
+            return JsonResponse({'error': 'Please provide all fields'}, status=400)
+        try:
+            user = User.objects.create_user(username, email, password)
+            return JsonResponse({'message': 'User created successfully'}, status=201)
+        except:
+            return JsonResponse({'error': 'Username or email already exists'}, status=400)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def login_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({'message': 'Login successful', 'email': user.email})
+        else:
+            return JsonResponse({'error': 'Invalid credentials'}, status=400)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def google_login(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        email = data.get('email')
+        name = data.get('name')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # If the user does not exist, create a new user
+            user = User.objects.create_user(username=email, email=email, password=None, first_name=name)
+        
+        # Authenticate and log in the user
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        return JsonResponse({'message': 'Google login successful', 'email': user.email})
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)

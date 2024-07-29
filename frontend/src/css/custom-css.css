@@ -51,7 +51,7 @@ h2 {
   justify-content: center; /* Center children horizontally */
 }
 
-button {
+.login-button {
   width: 60%;
   padding: 10px;
   margin: 10px 0;

@@ -3,9 +3,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .models import TestUpload
-from .serializers import TestUploadSerializer
+from rest_framework import status, viewsets
+from .models import TestUpload, Ingredient
+from .serializers import TestUploadSerializer, IngredientSerializer
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
@@ -85,3 +85,7 @@ def google_login(request):
         return JsonResponse({'message': 'Google login successful', 'email': user.email})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
+    
+class IngredientViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer

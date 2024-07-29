@@ -4,6 +4,7 @@ import {jwtDecode} from 'jwt-decode';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import '../css/custom-css.css'; // Import the CSS file for styling
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData)
     try {
       const response = await axios.post('http://localhost:8000/api/login/', formData);
       if (response.status === 200) {
@@ -53,30 +55,65 @@ const Login = () => {
     }
   };
 
+
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-      <div>
-        <h2>Login</h2>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Username:</label>
-            <input type="text" name="username" value={formData.username} onChange={handleChange} required />
+      <div className="login-container">
+        <div className="login-image">
+          {/* Placeholder for an image */}
+        </div>
+        <div className="login-form-container">
+          <h2>Login</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Username"
+                required
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+              />
+            </div>
+            {error && <div className="error-message">{error}</div>}
+            <div className="button-group">
+              <button type="submit" className="login-button">Login</button>
+            </div>
+          </form>
+          <div className="divider-container">
+            <div className="divider">
+              <span>Or</span>
+            </div>
           </div>
-          <div>
-            <label>Password:</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+          <div className="button-group">
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={() => {
+                console.log('Google login failed');
+                setError('Google login failed');
+              }}
+              render={renderProps => (
+                <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="google-login-button">
+                  Sign in with Google
+                </button>
+              )}
+            />
           </div>
-          {error && <div style={{ color: 'red' }}>{error}</div>}
-          <button type="submit">Login</button>
-        </form>
-        <h2>Or</h2>
-        <GoogleLogin
-          onSuccess={handleGoogleLoginSuccess}
-          onError={() => {
-            console.log('Google login failed');
-            setError('Google login failed');
-          }}
-        />
+          <div className="register-link">
+            <p>Don't have an account?</p>
+            <button onClick={() => navigate('/register')}>Register here</button>
+          </div>
+        </div>
       </div>
     </GoogleOAuthProvider>
   );

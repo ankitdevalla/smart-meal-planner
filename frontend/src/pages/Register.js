@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import '../css/custom-css.css'; // Import the CSS file for styling
+
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -51,32 +53,72 @@ const Register = () => {
 
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-      <div>
-        <h2>Register</h2>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Username:</label>
-            <input type="text" name="username" value={formData.username} onChange={handleChange} required />
+      <div className="login-container">
+        <div className="login-image">
+          {/* Placeholder for an image */}
+        </div>
+        <div className="login-form-container">
+          <h2>Register</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Username"
+                required
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email"
+                required
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+              />
+            </div>
+            {error && <div className="error-message">{error}</div>}
+            <div className="button-group">
+              <button type="submit" className="login-button">Register</button>
+            </div>
+          </form>
+          <div className="divider-container">
+            <div className="divider">
+              <span>Or</span>
+            </div>
           </div>
-          <div>
-            <label>Email:</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+          <div className="button-group">
+            <GoogleLogin
+              onSuccess={handleGoogleRegisterSuccess}
+              onError={() => {
+                console.log('Google register failed');
+                setError('Google register failed');
+              }}
+              render={renderProps => (
+                <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="google-login-button">
+                  Register with Google
+                </button>
+              )}
+            />
           </div>
-          <div>
-            <label>Password:</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+          <div className="register-link">
+            <p>Already have an account?</p>
+            <button onClick={() => navigate('/login')}>Login here</button>
           </div>
-          {error && <div style={{ color: 'red' }}>{error}</div>}
-          <button type="submit">Register</button>
-        </form>
-        <h2>Or</h2>
-        <GoogleLogin
-          onSuccess={handleGoogleRegisterSuccess}
-          onError={() => {
-            console.log('Google register failed');
-            setError('Google register failed');
-          }}
-        />
+        </div>
       </div>
     </GoogleOAuthProvider>
   );

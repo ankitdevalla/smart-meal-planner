@@ -1,0 +1,121 @@
+.login-container {
+  display: flex;
+  height: 100vh;
+  background-color: #c9cccb; /* Seafoam green background */
+}
+
+.login-image {
+  flex: 1;
+  background: url('../../logo2.webp') no-repeat center center;
+  background-size: 60%;
+  background-color: #c9cccb;
+}
+
+.login-form-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+}
+
+.input-group {
+  width: 100%; /* Ensure the input group takes full width */
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center children horizontally */
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  margin-bottom: 5px;
+  text-align: center; /* Center text */
+}
+
+.input-group input {
+  width: 60%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.button-group {
+  width: 100%; /* Ensure the button group takes full width */
+  display: flex;
+  justify-content: center; /* Center children horizontally */
+}
+
+button {
+  width: 60%;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #4CAF50; /* Green */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.register-link button {
+  background-color: #007BFF; /* Blue */
+}
+
+.register-link button:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+}
+
+.google-login-button {
+  background-color: #DB4437; /* Google Red */
+}
+
+.google-login-button:hover {
+  background-color: #C23321;
+}
+
+.divider-container {
+  width: 100%; /* Match the width of the input groups */
+  display: flex;
+  justify-content: center; /* Center children horizontally */
+}
+.divider {
+  width: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 2px solid black;
+}
+
+.divider:not(:empty)::before {
+  margin-right: 10px;
+}
+
+.divider:not(:empty)::after {
+  margin-left: 10px;
+}

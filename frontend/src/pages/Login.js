@@ -7,10 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import '../css/custom-css.css'; // Import the CSS file for styling
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -21,40 +18,49 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData)
     try {
-      const response = await axios.post('http://localhost:8000/api/login/', formData);
+      const response = await axios.post('http://localhost:8000/api/token/', formData);
       if (response.status === 200) {
-        const user = { name: formData.username, email: response.data.email };
+        const { access, refresh } = response.data;
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        const decodedToken = jwtDecode(access);
+        const user = { user_id: decodedToken.user_id, name: formData.username }; // Add additional user details if available
+        localStorage.setItem('user', JSON.stringify(user)); // Persist user data
         login(user);
         navigate('/profile');
       }
     } catch (error) {
-      setError(error.response.data.error);
+      setError(error.response.data.detail);
     }
   };
 
   const handleGoogleLoginSuccess = async (credentialResponse) => {
-    const decodedToken = jwtDecode(credentialResponse.credential);
-    const user = {
-      name: decodedToken.name,
-      email: decodedToken.email,
-      picture: decodedToken.picture,
-    };
-
     try {
-      // Send a request to the backend to register/login the user
-      const response = await axios.post('http://localhost:8000/api/google-login/', user);
+      const decodedToken = jwtDecode(credentialResponse.credential);
+      const user = {
+        name: decodedToken.name,
+        email: decodedToken.email,
+        picture: decodedToken.picture,
+      };
+  
+      const response = await axios.post('http://localhost:8000/api/google-login/', { token: credentialResponse.credential });
       if (response.status === 200) {
-        login(user);
+        const { access, refresh, user_id } = response.data; // Extract user_id
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('user', JSON.stringify({ ...user, user_id })); // Persist user data
+        login({ ...user, user_id }); // Include user_id in the context
         navigate('/profile');
+      } else {
+        setError('Google login failed.');
       }
     } catch (error) {
       console.log('Google login/register failed:', error);
       setError('Google login/register failed');
     }
   };
-
+  
 
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>

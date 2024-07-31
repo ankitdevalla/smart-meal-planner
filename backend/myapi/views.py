@@ -1,17 +1,23 @@
+import os
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, generics
+from rest_framework.permissions import IsAuthenticated
 from .models import TestUpload, Ingredient
-from .serializers import TestUploadSerializer, IngredientSerializer
+from .serializers import TestUploadSerializer, IngredientSerializer, UserSerializer
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from rest_framework_simplejwt.tokens import RefreshToken
 import json
+
 
 @api_view(['GET'])
 def hello_world(request):
@@ -67,25 +73,46 @@ def login_view(request):
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-@csrf_exempt
+@api_view(['POST'])
 def google_login(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        email = data.get('email')
-        name = data.get('name')
+    try:
+        # Get the token sent by the frontend
+        token = request.data.get('token')
+        # Specify the CLIENT_ID of the app that accesses the backend
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), os.getenv('REACT_APP_GOOGLE_CLIENT_ID'))
+
+        # ID token is valid, get the user's Google Account ID from the decoded token
+        google_user_id = idinfo['sub']
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+        
+        # Check if user exists, if not create one
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # If the user does not exist, create a new user
-            user = User.objects.create_user(username=email, email=email, password=None, first_name=name)
+            user = User.objects.create_user(username=email, email=email, first_name=name)
         
-        # Authenticate and log in the user
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        login(request, user)
-        return JsonResponse({'message': 'Google login successful', 'email': user.email})
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        return Response({'access': access_token, 'refresh': str(refresh), 'user_id': user.id}, status=status.HTTP_200_OK)
+    except ValueError as e:
+        # Invalid token
+        return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
     
 class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Ingredient.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Ensure all required fields are validated and provided
+        serializer.save(user=self.request.user)
+
+class UserDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
